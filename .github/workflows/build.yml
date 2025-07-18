@@ -13,6 +13,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Install vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          .\vcpkg\bootstrap-vcpkg.bat
+
+      - name: Download Ultraleap SDK
+        run: |
+          curl -L -o UltraleapSDK.zip https://ftp.reallusion.com/reallusionsupport/ultraleap-hand-tracking_v410.zip
+          tar -xf UltraleapSDK.zip
+
       - name: Configure CMake with vcpkg manifest mode
         run: |
           mkdir build
@@ -20,27 +30,12 @@ jobs:
           cmake .. `
             -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake
 
-      - name: Download Ultraleap SDK
-        run: |
-          curl -L -o UltraleapSDK.zip https://ftp.reallusion.com/reallusionsupport/ultraleap-hand-tracking_v410.zip
-          tar -xf UltraleapSDK.zip
-
-      - name: Install dependencies via vcpkg
-        run: .\vcpkg\vcpkg install websocketpp
-
-      - name: Setup CMake and configure project
-        run: |
-          mkdir build
-          cd build
-          cmake .. -DULTRALEAP_SDK_PATH=../UltraleapTrackingSDK \
-          -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake
-
       - name: Build
         run: |
           cd build
           cmake --build . --config Release
 
-       - name: Upload build artifacts
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: UltraleapWebSocketServer
