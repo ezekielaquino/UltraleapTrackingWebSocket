@@ -13,10 +13,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install vcpkg
+      - name: Configure CMake with vcpkg manifest mode
         run: |
-          git clone https://github.com/microsoft/vcpkg.git
-          .\vcpkg\bootstrap-vcpkg.bat
+          mkdir build
+          cd build
+          cmake .. `
+            -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake
 
       - name: Download Ultraleap SDK
         run: |
@@ -37,3 +39,9 @@ jobs:
         run: |
           cd build
           cmake --build . --config Release
+
+       - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: UltraleapWebSocketServer
+          path: build/Release/
