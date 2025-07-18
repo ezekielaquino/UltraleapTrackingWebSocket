@@ -1,0 +1,64 @@
+name: Build Ultraleap WebSocket
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Set up CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Set up dependencies (macOS only)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install openssl
+          curl -L -o LeapC.zip https://developer.leapmotion.com/sdk/v5.7.1/leapc_mac.zip
+          unzip LeapC.zip -d LeapC
+          mkdir -p external/LeapSDK/include external/LeapSDK/lib
+          cp -R LeapC/LeapSDK/include/* external/LeapSDK/include/
+          cp LeapC/LeapSDK/lib/libLeap.dylib external/LeapSDK/lib/
+
+      - name: Set up dependencies (Windows only)
+        if: matrix.os == 'windows-latest'
+        run: |
+          Invoke-WebRequest -Uri https://developer.leapmotion.com/sdk/v5.7.1/leapc_win.zip -OutFile LeapC.zip
+          Expand-Archive -Path LeapC.zip -DestinationPath LeapC
+          New-Item -ItemType Directory -Force -Path external/LeapSDK/include, external/LeapSDK/lib
+          Copy-Item -Recurse -Path LeapC/LeapSDK/include/* -Destination external/LeapSDK/include/
+          Copy-Item -Path LeapC/LeapSDK/lib/x64/Leap.dll -Destination external/LeapSDK/lib/
+          Copy-Item -Path LeapC/LeapSDK/lib/x64/Leap.lib -Destination external/LeapSDK/lib/
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+        shell: bash
+
+      - name: Build
+        run: |
+          cmake --build build --config Release
+        shell: bash
+
+      - name: Upload Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ultraleap-WebSocket-${{ matrix.os }}
+          path: |
+            build/UltraleapTrackingWebSocket.exe
+            build/UltraleapTrackingWebSocket
+          if-no-files-found: ignore
