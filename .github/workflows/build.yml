@@ -18,17 +18,24 @@ jobs:
           git clone https://github.com/microsoft/vcpkg.git
           .\vcpkg\bootstrap-vcpkg.bat
 
-      - name: Download Ultraleap SDK
+      - name: Clone vcpkg
         run: |
-          curl -L -o UltraleapSDK.zip https://ftp.reallusion.com/reallusionsupport/ultraleap-hand-tracking_v410.zip
-          tar -xf UltraleapSDK.zip
+          git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
+          C:\vcpkg\bootstrap-vcpkg.bat
 
-      - name: Configure CMake with vcpkg manifest mode
+      - name: Configure CMake with vcpkg
         run: |
           mkdir build
           cd build
           cmake .. `
-            -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake
+            -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake `
+            -DVCPKG_MANIFEST_MODE=ON `
+            -DVCPKG_ROOT=C:/vcpkg
+
+      - name: Download Ultraleap SDK
+        run: |
+          curl -L -o UltraleapSDK.zip https://ftp.reallusion.com/reallusionsupport/ultraleap-hand-tracking_v410.zip
+          tar -xf UltraleapSDK.zip
 
       - name: Build
         run: |
